@@ -11,11 +11,12 @@ import javax.persistence.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class UserEntity {
    @Id
    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String firstName;
+    private String password;
     private String lastName;
     private String email;
 }

@@ -1,15 +1,17 @@
 package com.example.task.authenticationservice.service;
 
 import com.example.task.authenticationservice.dto.UserDto;
-import com.example.task.authenticationservice.model.User;
+import com.example.task.authenticationservice.model.UserEntity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
 
-public interface UserService {
-    User getUser(Long userId);
-    List<User> getUsers();
-    User registerUser(UserDto userDto);
+public interface UserService extends UserDetailsService {
+    UserEntity getUser(Long userId);
+    List<UserEntity> getUsers();
+    UserEntity registerUser(UserDto userDto);
     String deleteUser(Long userId);
-    User updateUser(Long userId,UserDto userDto);
-    User saveUser(User user, UserDto userDto);
+    UserEntity updateUser(Long userId, UserDto userDto);
+    UserEntity saveUser(UserEntity userEntity, UserDto userDto);
+    UserEntity getUserDetailsByEmail(String email);
 }

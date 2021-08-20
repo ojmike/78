@@ -2,27 +2,35 @@ package com.example.task.authenticationservice.service.serviceImpl;
 
 import com.example.task.authenticationservice.dto.UserDto;
 import com.example.task.authenticationservice.exception.ApiRequestException;
-import com.example.task.authenticationservice.model.User;
+import com.example.task.authenticationservice.model.UserEntity;
 import com.example.task.authenticationservice.repository.UserRepository;
 import com.example.task.authenticationservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
-    public User getUser(Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
+    public UserEntity getUser(Long userId) {
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
         if(optionalUser.isPresent()){
-            User user = optionalUser.get();
-            return user;
+            UserEntity userEntity = optionalUser.get();
+            return userEntity;
         }
         else{
             throw new ApiRequestException("User does not exist");
@@ -30,21 +38,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<User> getUsers() {
-        List<User> users = userRepository.findAll();
-        if(users.isEmpty()){
+    public List<UserEntity> getUsers() {
+        List<UserEntity> userEntities = userRepository.findAll();
+        if(userEntities.isEmpty()){
             throw new ApiRequestException("No user found in the database");
         }
-        return users;
+        return userEntities;
     }
 
     @Override
-    public User registerUser(UserDto userDto) {
-        Optional<User> optionalUser = userRepository.findByEmail(userDto.getEmail());
-        User user = new User();
+    public UserEntity registerUser(UserDto userDto) {
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(userDto.getEmail());
+        UserEntity userEntity = new UserEntity();
         if(optionalUser.isEmpty()) {
-            saveUser(user,userDto);
-            return userRepository.save(user);
+            saveUser(userEntity,userDto);
+            return userRepository.save(userEntity);
         }else{
             throw new ApiRequestException("User with email "+ userDto.getEmail()+" already exist");
         }
@@ -54,10 +62,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String deleteUser(Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
         if(optionalUser.isPresent()){
-            User user = optionalUser.get();
-            userRepository.delete(user);
+            UserEntity userEntity = optionalUser.get();
+            userRepository.delete(userEntity);
             return "User deleted successfully";
              }
         else{
@@ -67,11 +75,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User updateUser(Long userId, UserDto userDto) {
-        Optional<User> userOptional = userRepository.findById(userId);
+    public UserEntity updateUser(Long userId, UserDto userDto) {
+        Optional<UserEntity> userOptional = userRepository.findById(userId);
         if(userOptional.isPresent()){
-            User user = userOptional.get();
-            return saveUser(user,userDto);
+            UserEntity userEntity = userOptional.get();
+            return saveUser(userEntity,userDto);
         }else {
             throw new ApiRequestException("User does not exist");
         }
@@ -79,13 +87,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User saveUser(User user, UserDto userDto) {
-        user.setFirstName(userDto.getFirstName());
-        user.setLastName(userDto.getLastName());
-        user.setEmail(userDto.getEmail());
-        return user;
+    public UserEntity saveUser(UserEntity userEntity, UserDto userDto) {
+        userEntity.setFirstName(userDto.getFirstName());
+        userEntity.setLastName(userDto.getLastName());
+        userEntity.setEmail(userDto.getEmail());
+        userEntity.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
+        return userEntity;
+    }
+
+    @Override
+    public UserEntity getUserDetailsByEmail(String email) {
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
+        if(optionalUser.isPresent()){
+            UserEntity userEntity = optionalUser.get();
+            return userEntity;
+             }
+        else{
+            throw new ApiRequestException("User does not exist");
+        }
     }
 
 
-
+    @Override
+    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
+        Optional<UserEntity> optionalUser = userRepository.findByEmail(s);
+        if(optionalUser.isPresent()){
+            UserEntity userEntity = optionalUser.get();
+            return new User(userEntity.getEmail(), userEntity.getPassword(),true,true,true,true,new ArrayList<>()) ;
+        }
+        else{
+            throw new ApiRequestException("User does not exist");
+        }
+    }
 }

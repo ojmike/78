@@ -1,0 +1,18 @@
+version: '3.3'
+services:
+  safari_web_store_api:
+    container_name: authentication-service-app
+    image: authentication-service-app
+    build: ./
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgresqldb
+  postgresqldb:
+    image: postgres
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=gateway28j
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=authenticationAppDb
